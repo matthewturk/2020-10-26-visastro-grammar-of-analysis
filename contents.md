@@ -408,14 +408,18 @@ from the very big to the very small.
 
 [yt-project.org](https://yt-project.org/)
 
-<p class="fragment">
-The implementation of a physically-aware grammar of analysis of this data will
-foster better connections between machine learning models and data from the
-natural sciences.
-</p>
+</div>
+</div>
 
-</div>
-</div>
+---
+
+# Volumetric Analysis Platform
+
+Data-format independent analysis and visualization.
+
+![Multiple codes, same analysis](images/multicode.png)
+
+From left, these are GAMER-2, AREPO and GIZMO data outputs, each utilizing different discretization and data ingestion mechanisms.  Image courtesy John ZuHone.
 
 ---
 
