@@ -4,7 +4,10 @@
 
 ## Matthew Turk
 
-<p data-markdown=true><tt>mjturk@illinois.edu</tt></p>
+<p data-markdown=true>School of Information Sciences<br/>
+University of Illinois at Urbana-Champaign<br/>
+<tt>mjturk@illinois.edu</tt><br/>
+<tt>matthewturk.github.io</tt></p>
 
 ---
 
