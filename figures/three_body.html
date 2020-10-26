@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+  <head>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.12.0/d3.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/flubber/0.4.2/flubber.min.js"></script>
+      <script src="https://unpkg.com/d3-rect"></script>
+      <script src="https://cdn.jsdelivr.net/npm/vega"></script>
+      <script src="https://cdn.jsdelivr.net/npm/vega-lite"></script>
+      <script src="https://cdn.jsdelivr.net/npm/vega-embed"></script>
+  </head>
+  <body>
+    <div id="vis"></div>
+    
+    <script type="text/javascript">
+
+        const svg = d3
+            .select("#vis")
+            .append("svg")
+            .attr("height", 400)
+            .attr("width", 500);
+
+        const colorScale = d3.scaleSequential([0, 1], d3.interpolateReds);
+
+        const xScale = d3.scaleLinear().range([0, 500]).domain([-1.0, 1.0]);
+        const yScale = d3.scaleLinear().range([400, 0]).domain([-1.0, 1.0]);
+
+        function setup() {
+            var g = svg.append("g").attr("id", "new_molecule");
+            g.append("circle")
+            .attr("id", "h_1")
+            .attr("cx", xScale(-0.5))
+            .attr("cy", yScale(-0.75))
+            .attr("r", 20)
+            .style("fill", "steelblue");
+            g.append("circle")
+            .attr("id", "h_2")
+            .attr("cx", xScale(-0.5))
+            .attr("cy", yScale(+0.75))
+            .attr("r", 20)
+            .style("fill", "steelblue");
+            svg.append("circle")
+            .attr("id", "h_3")
+            .attr("cx", xScale(+0.5))
+            .attr("cy", yScale(0.0))
+            .attr("r", 20)
+            .style("fill", "steelblue");
+        }
+
+        function collisionOne() {
+
+            svg.selectAll("circle")
+                .transition()
+                .ease(d3.easeExpIn)
+                .duration(1500)
+                .attr("cx", xScale(0.0))
+                .attr("cy", yScale(0.0)).on("end", () => {
+                    var t = d3.transition().duration(100);
+                    var c1 = d3.color("steelblue");
+                    var c2 = c1.darker(0.5);
+                    c2.r += 100;
+                    svg.select("#h_1")
+                        .transition(t)
+                        .attr("cx", xScale(-0.1))
+                        .attr("cy", yScale(0.025))
+                        .style("fill", c2);
+                    svg.select("#h_2")
+                        .transition(t)
+                        .attr("cx", xScale(-0.1))
+                        .attr("cy", yScale(-0.025))
+                        .style("fill", c2);
+
+                });
+        }
+
+        function spinAway() {
+            var t2 = d3.transition().duration(1500);
+            svg.select("#h_3")
+                .transition(t2)
+                .attr("cx", xScale(1.0) + 30)
+                .attr("cy", yScale(-0.2));
+            svg.select("g#new_molecule")
+                .transition(t2)
+                .attr("transform", "translate(-300 10)");
+        }
+
+        var _transitions = [{
+            transitionForward: () => setup(),
+        }, {
+            transitionForward: () => collisionOne(),
+        }, {
+            transitionForward: () => spinAway(),
+        }];
+
+    </script>
+  </body>
+</html>

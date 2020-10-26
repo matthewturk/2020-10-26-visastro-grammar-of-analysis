@@ -1,35 +1,3 @@
-// These are adapted from:
-// 
-// https://heredragonsabound.blogspot.com/2020/02/creating-pencil-effect-in-svg.html
-//
-//
-// An example:
-//
-// const svg = d3.create("svg").attr("height", 300).attr("width", 300);
-// applyPencilFilterTextures(svg);
-// svg.append("g")
-//    .attr("filter", "url(#roughPaper)")
-//    .append("rect")
-//    .attr("x", 10)
-//    .attr("y", 10)
-//    .attr("width", 250)
-//    .attr("height", 250)
-//    .style("fill", "black")
-//    .style("stroke", "black")
-//    .style("stroke-width", 5);
-//
-// svg.append("line")
-//    .attr("filter", "url(#pencilTexture4")
-//    .attr("x1", 15)
-//    .attr("x2",285)
-//    .attr("y1", 15)
-//    .attr("y2",200)
-//    .style("stroke", "black")
-//    .style("stroke-width", 5)
-//    .style("fill-opacity", "1")
-//    .style("fill", "gray");
-//
-
 function applyPencilFilterTextures(svg) {
   
   const defs = svg.append("defs");

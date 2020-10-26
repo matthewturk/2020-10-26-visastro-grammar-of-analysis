@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+  <head>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.12.0/d3.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/flubber/0.4.2/flubber.min.js"></script>
+      <script src="https://unpkg.com/d3-rect"></script>
+      <script src="https://cdn.jsdelivr.net/npm/vega"></script>
+      <script src="https://cdn.jsdelivr.net/npm/vega-lite"></script>
+      <script src="https://cdn.jsdelivr.net/npm/vega-embed"></script>
+	  <script src="https://cdn.jsdelivr.net/npm/d3-interpolate-path@2.1.2/build/d3-interpolate-path.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/roughjs@4.2.3/bundled/rough.min.js"></script>
+      <script src="rough_funcs.js"></script>
+      <link href="https://fonts.googleapis.com/css2?family=Mali:wght@600&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div id="vis" style="text-align: center;"></div>
+    <script type="text/javascript">
+
+        const svg = d3
+            .select("#vis")
+            .append("svg")
+            .style("align", "center")
+            .attr("height", 512)
+            .attr("width", 1024)
+            .attr("viewBox", [0, 0, 200, 100]);
+
+        const text = ["The sky ", "is full of stars ", "that twinkle."];
+
+        // Helpfully scaled from http://www.tsgc.utexas.edu/space_vision/constellations.pdf
+        const starPositions = [
+          [ 20, 38],
+          [ 54, 33],
+          [ 78, 38],
+          [112, 48],
+          [122, 77],
+          [170, 77],
+          [180, 38]
+
+        ];
+
+        function displayText() {
+            const textSpans = d3
+                .select("#vis")
+                .append("div")
+                .attr("id", "storyText")
+                .style("font-size", "72px")
+                .style("text-align", "center")
+                .style("color", "Indigo")
+                .style("font-family", "'Mali', cursive")
+                .selectAll("span")
+                .data(text)
+                .enter()
+                .append("span")
+                .style("opacity", 0.0)
+                .text(d => d);
+            return textSpans.transition()
+                .delay((d, i) => i * 1500)
+                .style("opacity", 1.0);
+        }
+
+        function highlightText(index) {
+            return d3.select("div#storyText")
+                .selectAll("span")
+                .transition()
+                .duration(1000)
+                .style("color", (d, i) => i == index ? "Maroon" : "Indigo");
+        }
+
+        function drawSky() {
+
+            const rc = rough.svg(svg);
+            let generator = rc.generator;
+
+            var paths = [];
+            var e = rc.draw(generator.rectangle(0, 0, 200, 100,
+                {strokeWidth: 5.0,
+                    stroke: "rgba(72, 61, 139, 1.0)",
+                    fillWeight: 10.0,
+                    fill: "rgba(72, 61, 139, 0.05)",
+                    fillStyle: "dots",
+                    roughness: 1}))
+            paths.push(splitRoughElement(e));
+            svg.selectAll("g")
+                .data(paths)
+                .enter()
+                .append("g")
+                .each( (d, i, n) => {
+                    d3.select(n[i])
+                        .selectAll("path")
+                        .data(d)
+                        .enter()
+                        .append("path")
+                        .attr("d", d => d.d)
+                        .attr("style", d => d.style);
+                });
+            progressiveDraw(svg.selectAll("path"), 1.5);
+        }
+
+        function drawStars() {
+
+            const rc = rough.svg(svg);
+            const generator = rc.generator;
+            var paths = [];
+            var starAttrs = {fillWeight: 7.5,
+                             stroke: "goldenRod",
+                             strokeWidth: 0.5,
+                             fill: "gold",
+                             fillStyle: "solid",
+                             roughness: 1.0};
+            var stars = [];
+            svg.selectAll("g.stars")
+                .data(starPositions)
+                .enter()
+                .each( d => stars.push( generator.circle(d[0], d[1], 10.0, starAttrs) ))
+                .append("g")
+                .attr("class", "stars")
+                .style("display", "none")
+                .attr("transform-origin", d => "" + d[0] + "px " + d[1] + "px")
+                .each( (d, i, el) => el[i].appendChild(rc.draw(stars[i])));
+
+            svg.selectAll("g.stars")
+                .data(starPositions)
+                .transition()
+                .delay( (d, i) => i * 500)
+                .style("display", "initial");
+        }
+
+        function twinkleStars() {
+            var rng = d3.randomUniform(0, 500);
+            svg.selectAll("g.stars")
+                .data(starPositions)
+                .transition()
+                .duration(1000)
+                .delay((d, i) => rng() + i * 300)
+                .on("start", function repeat() {
+                    d3.active(this)
+                      .attr("transform", "scale(1.05)")
+                    .transition()
+                      .attr("transform", "scale(0.95)")
+                    .transition()
+                      .on("start", repeat)
+                });
+        }
+
+        var _transitions = [{
+            transitionForward: () => displayText(),
+        }, {
+            transitionForward: () => highlightText(0).end().then(drawSky),
+        }, {
+            transitionForward: () => highlightText(1).end().then(drawStars),
+        }, {
+            transitionForward: () => highlightText(2).end().then(twinkleStars),
+        }
+        ];
+
+    </script>
+  </body>
+</html>

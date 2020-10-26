@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+  <head>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.12.0/d3.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/flubber/0.4.2/flubber.min.js"></script>
+      <script src="https://unpkg.com/d3-rect"></script>
+      <script src="volgrammar-functions.js"></script>
+  </head>
+  <body>
+    <div id="vis-volume-layout"></div>
+    
+    <script type="text/javascript">
+
+        const svg = d3
+            .select("#vis-volume-layout")
+            .append("svg")
+            .attr("height", 600)
+            .attr("width", 400)
+            .attr("viewBox", [0, -150, 200, 300]);
+
+        var cfg = defaultConfig([12, 16], [
+            [
+                [20.0, 180.0],
+                [15.0, 150.0]
+            ],
+            [
+                [-120.0, 120.0],
+                [0.0, Math.PI]
+            ]
+        ]);
+
+        var cellDataWithAMR = createCells(cfg, 0, [12, 16], [0, 0], 0).concat(
+            createCells(cfg, 1, [12, 16], [2, 4], 45)).concat(
+            createCells(cfg, 2, [8, 8], [8, 10], 90)).concat(
+            createCells(cfg, 2, [4, 6], [16, 32], 135));
+
+        var pathCollection = createPaths(cfg, cellDataWithAMR, 6, 0.4, 0.4);
+        var cellsDisk = pathCollection.disk;
+        console.log(pathCollection);
+
+        var forwardInt = [
+            flubber.interpolateAll(pathCollection.disk, pathCollection.memory),
+            flubber.interpolateAll(pathCollection.memory, pathCollection.cyl),
+            flubber.interpolateAll(pathCollection.cyl, pathCollection.disk)
+        ];
+
+        var reverseInt = [
+            flubber.interpolateAll(pathCollection.memory, pathCollection.disk),
+            flubber.interpolateAll(pathCollection.cyl, pathCollection.memory),
+            flubber.interpolateAll(pathCollection.disk, pathCollection.cyl)
+        ];
+
+        function setup() {
+            var cellColor = d3.scaleSequential(d3.interpolateSpectral)
+                .domain([0, pathCollection.disk.length - 1]);
+            svg.selectAll("path")
+                .data(cellDataWithAMR)
+                .enter()
+                .append("path")
+                .style("stroke", "black")
+                .style("stroke-width", 0.5)
+                .style("fill", (d, path_i) => cellColor(path_i))
+                .style("fill-opacity", 1.0)
+                .attr("d", (d, path_i) => pathCollection.disk[path_i]);
+        }
+
+        function transitionCells( interpolator) {
+            svg.selectAll("path")
+                .data(cellDataWithAMR)
+                .transition()
+                .delay(d => (d.flatIndex + 1) * 10)
+                .duration(2000)
+                .attrTween("d", function(d, path_i) {
+                    return interpolator[path_i]
+                });
+        }
+
+        var _transitions = [{
+            transitionForward: () => setup(cellsDisk),
+        }, {
+            transitionForward: () => transitionCells(forwardInt[0]),
+            transitionBackward: () => transitionCells(reverseInt[0]),
+        }, {
+            transitionForward: () => transitionCells(forwardInt[1]),
+            transitionBackward: () => transitionCells(reverseInt[1]),
+        }];
+
+    </script>
+  </body>
+</html>

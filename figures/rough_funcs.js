@@ -3,40 +3,6 @@
 // <script src="https://cdn.jsdelivr.net/npm/d3-interpolate-path@2.1.2/build/d3-interpolate-path.min.js"></script>
 // <script src="https://cdn.jsdelivr.net/npm/roughjs@4.2.3/bundled/rough.min.js"></script>
 //
-// Example usage:
-//
-//   const svg = d3.create("svg")
-//   .attr("height", 250)
-//   .attr("width", 250)
-//   .attr("viewBox", [0, 0, 250, 250]);
-//   const myData = [
-//     40, 80, 100, 200, 10, 30
-//   ];
-//   const rc = rough.svg(svg);
-//   let generator = rc.generator;
-//   var paths = [];
-//   svg.selectAll("g")
-//     .data(myData)
-//     .enter()
-//     .each( (d, i) => {
-//     var e = rc.draw(generator.rectangle(
-//       10, i * 30 + 10, d, 20, {fillWeight: 0.7, fill: "steelblue", fillStyle: "cross-hatch", roughness: 2}))
-//     paths.push(splitRoughElement(e));
-//   });
-//   svg.selectAll("g")
-//     .data(paths)
-//     .enter()
-//     .append("g")
-//     .each( (d, i, n) => {
-//     d3.select(n[i])
-//       .selectAll("path")
-//       .data(d)
-//       .enter()
-//       .append("path")
-//       .attr("d", d => d.d)
-//       .attr("style", d => d.style);
-//   });
-//   progressiveDraw(svg.selectAll("path"), 3);
 
 function progressiveDraw(baseSelection, factor) {
   var lengths = baseSelection.nodes().map( n => n.getTotalLength() );
@@ -50,6 +16,20 @@ function progressiveDraw(baseSelection, factor) {
     .delay( (d, i) => cumulativeLengths[i] * factor)
     .duration( (d, i) => lengths[i] * factor)
     .attr("stroke-dashoffset", 0).end();
+}
+
+function progressiveDrawAndUndraw(baseSelection, factor, callAfter) {
+  var lengths = baseSelection.nodes().map( n => n.getTotalLength() );
+  // https://stackoverflow.com/questions/20477177/creating-an-array-of-cumulative-sum-in-javascript
+  var cumulativeLengths = lengths.map((sum => value => sum += value)(0));
+  var totalLength = cumulativeLengths[lengths.length - 1];
+  return baseSelection
+    .attr("stroke-dasharray", (d, i, nl) => " " + lengths[i] + " " + lengths[i])
+    .attr("stroke-dashoffset", (d, i, nl) => lengths[i])
+    .transition()
+    .delay( (d, i) => cumulativeLengths[i] * factor)
+    .duration( (d, i) => lengths[i] * factor)
+    .attr("stroke-dashoffset", (d, i) => -lengths[i]).end();
 }
 
 function splitRoughElement(roughElement) {

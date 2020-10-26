@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+  <head>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.12.0/d3.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/flubber/0.4.2/flubber.min.js"></script>
+      <script src="https://unpkg.com/d3-rect"></script>
+      <script src="volgrammar-functions.js"></script>
+  </head>
+  <body>
+    <div id="vis-kh-path"></div>
+    
+    <script type="text/javascript">
+
+        const svg = d3
+                .select("#vis-kh-path")
+                .append("svg")
+                .attr("height", 600)
+                .attr("width", 1024)
+                .attr("viewBox", [0, 0, 1024, 768]);
+
+        var loadData = Promise.all([d3.json("kh.json"), d3.json("kh_amr.json")])
+            .then(data => kelvinHelmholtzAMR(data[0], data[1]));
+
+        var Nsegments = 200;
+        var linePlotY = d3.scaleLinear()
+            .range([512 - 32, 32]);
+        var linePlotX = d3.scaleLinear()
+            .domain([0, Nsegments])
+            .range([512 + 48, 1024 - 64]);
+
+        var myPoints = [[18, 13], [381, 79], [443, 228], [381, 331],
+                        [239, 338], [160, 183], [88, 316], [184, 441],
+                        [109, 491]];
+        var cellColor = d3.scaleSequential(d3.interpolateGreys).domain([0.95, 2.15]);
+
+        function setup(data) {
+            cellData = data.cellData;
+            cellPaths = data.cellPaths;
+            tree = data.tree;
+            kh_amr = data.kh_amr;
+
+            var biggestCell = [d3.max(cellData, d=>d.width[0]),
+                               d3.max(cellData, d=>d.height[0])];
+            svg.append("g")
+                .attr("id", "image")
+                .selectAll("rect")
+                .data(cellData) 
+                .enter()
+                .append("rect")
+                .attr("class", "selectable")
+                .attr("stroke", "darkgrey")
+                .attr("stroke-width", 1.0)
+                .attr("stroke-opacity", 0.5)
+                .style("fill", (d, flatIndex) => cellColor(d.density))
+                .style("fill-opacity", 0.3)
+                .attr("x", (d, flatIndex) => cellData[flatIndex].x[0])
+                .attr("y", (d, flatIndex) => cellData[flatIndex].y[0])
+                .attr("width", (d, flatIndex) => cellData[flatIndex].width[0])
+                .attr("height", (d, flatIndex) => cellData[flatIndex].height[0])
+                .each(d=>{d.selected=false});
+
+            var line = d3.line()
+                .curve(d3.curveCatmullRom.alpha(0.5));
+
+            var myPath = svg.append("g")
+                .attr("id", "pathintegration")
+                .append("path")
+                .attr("d", line(myPoints))
+                .attr("stroke", "none")
+                .attr("display", "none")
+                .style("fill", "none").node();
+
+            var length = myPath.getTotalLength();
+            var Nsegments = 200;
+            var dt = length / Nsegments;
+            var pathSegments = d3.range(Nsegments).map( d => {
+                var segment = {x1: myPath.getPointAtLength(d * dt).x,
+                    y1: myPath.getPointAtLength(d * dt).y,
+                    x2: myPath.getPointAtLength((d+1) * dt).x,
+                    y2: myPath.getPointAtLength((d+1) * dt).y,
+                    i: d};
+                tree.visit(findOverlappingNodesPoint([segment.x2, segment.y2], biggestCell, nd => {
+                    segment.density = nd.density;
+                    segment.velocity_x = nd.velocity_x;
+                    segment.velocity_y = nd.velocity_y;
+                    segment.level;
+                }));
+                return segment;
+            });
+
+            linePlotY.domain(d3.extent(pathSegments, d=>d.density));
+
+            var pathsegments = svg.append("g").attr("id", "pathsegments")
+                .selectAll("line")
+                .data(pathSegments)
+                .enter()
+                .append("line")
+                .attr("x1", d=>d.x1)
+                .attr("y1", d=>d.y1)
+                .attr("x2", d=>d.x2)
+                .attr("y2", d=>d.y2)
+                .style("stroke", "#7C4DFF")
+                .style("stroke-width", 4.0)
+                .style("fill", "#7C4DFF")
+                .style("stroke-opacity", 0.0)
+                .style("fill-opacity", 0.0);
+
+            svg.append("g").attr("transform", "translate(560,0)").call(d3.axisLeft(linePlotY));
+            svg.append("g").attr("transform", "translate(0," + (512 - 32) + ")").call(d3.axisBottom(linePlotX));
+            var linequery = svg.append("g")
+                .attr("id", "linequery")
+                .selectAll("line")
+                .data(pathSegments.slice(1))
+                .enter()
+                .append("line")
+                .attr("fill", "#7C4DFF")
+                .attr("stroke", "#7C4DFF")
+                .attr("stroke-width", 2.5)
+                .style("stroke-opacity", 0.0)
+                .style("fill-opacity", 0.0)
+                .attr("x1", (d, i) => linePlotX(i-1))
+                .attr("x2", (d, i) => linePlotX(i))
+                .attr("y1", (d, i) => linePlotY(pathSegments[i].density))
+                .attr("y2", (d, i) => linePlotY(d.density));
+
+            var circle = svg
+                .append("g")
+                .attr("id", "circlepath")
+                .append("circle")
+                .attr("cx", myPoints[0][0])
+                .attr("cy", myPoints[0][1])
+                .attr("r", 5.0)
+                .style("fill", "#2196F3");
+            var circleQuery = svg
+                .append("g")
+                .attr("id", "circlequery")
+                .append("circle")
+                .attr("cx", linePlotX(0))
+                .attr("cy", linePlotY(pathSegments[0].density))
+                .attr("r", 5.0)
+                .style("fill", "#2196F3");
+            data.myPath = myPath;
+            data.pathSegments = pathSegments;
+        }
+
+        async function startAnimation(data) {
+            var t = Promise.resolve();
+            circle = svg.select("g#circlepath").selectAll("circle");
+            circleQuery = svg.select("g#circlequery").selectAll("circle");
+            path = svg.select("g#pathsegments").selectAll("line");
+            line = svg.select("g#linequery").selectAll("line");
+            for (var segi = 0; segi < data.pathSegments.length; segi++) {
+                var tr = d3.transition().duration(100);
+                circle.transition(tr)
+                    .attr("cx", data.pathSegments[segi].x2)
+                    .attr("cy", data.pathSegments[segi].y2);
+                path
+                    .filter(d => (d.i <= segi))
+                    .transition(tr)
+                    .style("fill-opacity", 1.0)
+                    .style("stroke-opacity", 1.0);
+                circleQuery
+                    .transition(tr)
+                    .attr("cx", linePlotX(segi))
+                    .attr("cy", linePlotY(data.pathSegments[segi].density));
+                line
+                    .filter(d => (d.i <= segi))
+                    .transition(tr)
+                    .style("fill-opacity", 1.0)
+                    .style("stroke-opacity", 1.0);
+                await tr.end();
+            }
+            return data;
+        }
+
+        var _transitions = [
+            {
+                transitionForward: () => loadData.then(setup)
+            }, {
+                transitionForward: () => loadData.then(startAnimation)
+            }
+        ];
+    </script>
+  </body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+  <head>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.12.0/d3.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/flubber/0.4.2/flubber.min.js"></script>
+      <script src="https://unpkg.com/d3-rect"></script>
+      <script src="https://cdn.jsdelivr.net/npm/vega"></script>
+      <script src="https://cdn.jsdelivr.net/npm/vega-lite"></script>
+      <script src="https://cdn.jsdelivr.net/npm/vega-embed"></script>
+  </head>
+  <body>
+    <div id="vis"></div>
+    
+    <script type="text/javascript">
+
+        const svg = d3
+            .select("#vis")
+            .append("svg")
+            .attr("height", 600)
+            .attr("width", 500)
+            .style("border", "solid black");
+
+        const colorScale = d3.scaleSequential([0, 1], d3.interpolateYlOrRd);
+
+        function setup() {
+            svg.append("ellipse")
+            .attr("id", "halo")
+               .attr("cx", 250)
+               .attr("cy", 300)
+               .attr("rx", 450)
+               .attr("ry", 450)
+               .style("fill", colorScale(0.1));
+            svg.append("ellipse")
+                .attr("id", "star")
+               .attr("cx", 250)
+               .attr("cy", 300)
+               .attr("rx", 0)
+               .attr("ry", 0)
+               .style("fill", colorScale(0.1));
+        }
+
+        function nonLinear() {
+            var t = d3.transition().duration(6000);
+            svg.select("ellipse#halo")
+            .transition(t)
+            .attr("rx", 200)
+            .attr("ry", 150)
+            .style("fill", colorScale(0.5));
+            svg.select("ellipse#star")
+            .transition(t)
+            .attr("rx", 25)
+            .attr("ry", 25)
+            .style("fill", colorScale(0.5));
+        }
+
+        function compression() {
+            var t = d3.transition().duration(3000);
+            svg.select("ellipse#halo")
+            .transition(t)
+            .attr("ry", 15)
+            .attr("rx", 175)
+            .style("fill", colorScale(0.7));
+            svg.select("ellipse#star")
+            .transition(t)
+            .style("fill", colorScale(0.7));
+        }
+
+        var _transitions = [{
+            transitionForward: () => setup(),
+        }, {
+            transitionForward: () => nonLinear()
+        }, {
+            transitionForward: () => compression()
+        }];
+
+    </script>
+  </body>
+</html>

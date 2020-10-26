@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+  <head>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.12.0/d3.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/flubber/0.4.2/flubber.min.js"></script>
+      <script src="https://unpkg.com/d3-rect"></script>
+      <script src="volgrammar-functions.js"></script>
+  </head>
+  <body>
+    <div id="vis-kh-operations"></div>
+    
+    <script type="text/javascript">
+
+        const svg = d3
+                .select("#vis-kh-operations")
+                .append("svg")
+                .attr("viewBox", [0, 0, 700, 700]);
+
+        var loadData = Promise.all([d3.json("kh.json"), d3.json("kh_amr.json")])
+            .then(data => kelvinHelmholtzAMR(data[0], data[1]));
+
+        var cellColor = d3.scaleSequential(d3.interpolateViridis).domain([0.95, 2.15]);
+        var cellColorBW = d3.scaleSequential(d3.interpolateGreys).domain([0.95, 2.15]);
+
+        function setup(data) {
+            cellData = data.cellData;
+            cellPaths = data.cellPaths;
+            tree = data.tree;
+            kh_amr = data.kh_amr;
+
+            cellData.forEach( d => d.selected = false);
+
+            var maxCells = d3.max(d3.nest()
+                .key(d => d.level)
+                .rollup(d => d.length)
+                .entries(cellData),
+                d=>d.value);
+
+            function brushed() {
+                var extent = d3.event.selection;
+                var newLevels = new Array(3).fill(0);
+                tree.visit(findOverlappingNodesRect(extent, nd => { 
+                    newLevels[nd.level] += 1;
+                    nd.selected = true;
+                }));
+                imageRect.filter(d=>!d.selected)
+                    .style("fill", d => cellColorBW(d.density))
+                imageRect.filter(d=>d.selected)
+                    .style("fill", d => cellColor(d.density))
+                    .each(d=>{d.selected=false;});
+                svg.select("g#barchart")
+                    .selectAll("rect")
+                    .data(newLevels)
+                    .transition()
+                    .attr("y", d=> histY(d))
+                    .attr("height", d => height - (32 + histY(d)));
+            }
+            var histY = d3.scaleLinear()
+                .domain([0, maxCells]).nice()
+                .range([height - 32, 32]);
+            var histX = d3.scaleBand()
+                .domain([0, 1, 2])
+                .range([512 + 48, 700 - 64])
+                .padding(0.1)
+            svg.append("g")
+                .attr("transform", "translate(560,0)")
+                .call(d3.axisLeft(histY));
+            svg.append("g")
+                .attr("transform", "translate(0," + (512 - 32) + ")")
+                .call(d3.axisBottom(histX));
+            var brush = d3.brush()
+                .extent([[0.0, 0.0], [512, 512]])
+                .on("brush", brushed);
+            var imageRect = svg.append("g")
+                .attr("id", "image")
+                .selectAll("rect")
+                .data(cellData)
+                .enter()
+                .append("rect")
+                .attr("class", "selectable")
+                .attr("stroke", "lightgrey")
+                .attr("stroke-width", 1.0)
+                .attr("stroke-opacity", 0.5)
+                .style("fill", (d, flatIndex) => cellColor(d.density))
+                .attr("x", (d, flatIndex) => cellData[flatIndex].x[0])
+                .attr("y", (d, flatIndex) => cellData[flatIndex].y[0])
+                .attr("width", (d, flatIndex) => cellData[flatIndex].width[0])
+                .attr("height", (d, flatIndex) => cellData[flatIndex].height[0])
+                .each(d=>{d.selected=false});
+            svg.append("g")
+                .attr("id", "barchart")
+                .selectAll("rect")
+                .data([0, 0, 0])
+                .enter()
+                .append("rect")
+                .attr("x", (d, i) => histX(i))
+                .attr("y", d=> histY(d) + 32)
+                .attr("y", d=> height - 32 - histY(d))
+                .attr("width", histX.bandwidth())
+                .attr("fill", "#2196F3");
+            svg.append("g")
+                .attr("class", "brush")
+                .call(brush)
+                .call(brush.move, [[0, 0], [512, 512]]);
+            data.brush = brush;
+        }
+
+        function moveBrushStep1(data) {
+            svg.select("g.brush")
+                .transition()
+                .duration(2500)
+                .call(data.brush.move, [[20, 20], [50, 50]]);
+        }
+
+        function moveBrushStep2(data) {
+            svg.select("g.brush")
+                .transition()
+                .duration(2500)
+                .call(data.brush.move, [[20, 20], [400, 300]]);
+        }
+
+        function moveBrushStep3(data) {
+            svg.select("g.brush")
+                .transition()
+                .duration(2500)
+                .call(data.brush.move, [[50, 250], [500, 450]]);
+        }
+        var _transitions = [
+            {
+                transitionForward: () => loadData.then(setup)
+            }, {
+                transitionForward: () => loadData.then(moveBrushStep1)
+            }, {
+                transitionForward: () => loadData.then(moveBrushStep2)
+            }, {
+                transitionForward: () => loadData.then(moveBrushStep3)
+            },
+        ];
+    </script>
+  </body>
+</html>

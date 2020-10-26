@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+  <head>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.12.0/d3.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/flubber/0.4.2/flubber.min.js"></script>
+      <script src="https://unpkg.com/d3-rect"></script>
+      <script src="volgrammar-functions.js"></script>
+  </head>
+  <body>
+    <div id="vis-volume-layout"></div>
+    
+    <script type="text/javascript">
+
+        const svg = d3
+            .select("#vis-volume-layout")
+            .append("svg")
+            .attr("height", 500)
+            .attr("width", 500)
+            .attr("viewBox", [0, 0, 1024, 768]);
+
+        const Nrow = 25;
+        const blockSize = 32;
+
+        const particleHighlights = [ 2, 125, 72, 63, 151, 244, 211, 57, 121,
+            187, 245, 18];
+
+        var diskColorBW = d3.scaleSequentialLog(d3.interpolateGreys);
+        var diskColor = d3.scaleSequentialLog(d3.interpolateViridis);
+
+        var imageX = d3.scaleLinear()
+            .range([16, 600]);
+        var imageY = d3.scaleLinear()
+            .range([16, 600]);
+
+        var loadData = d3.json("tipsy_galaxy.json").then( data => {
+            extent = [
+                Math.max(d3.max(data, d => d.particle_position_x),
+                         d3.max(data, d => d.particle_position_y)),
+                Math.min(d3.min(data, d => d.particle_position_x),
+                         d3.min(data, d => d.particle_position_y))
+            ];
+
+            var densityRange = d3.extent(data, d => d.density);
+            var densityRangeClip = [d3.min(data, d => d.density),
+                                    d3.quantile(data, 0.75, d => d.density)];
+
+            imageX.domain(extent);
+            imageY.domain(extent);
+            diskColorBW.domain(densityRangeClip);
+            diskColor.domain(densityRange);
+
+            var scaleR = d3.scaleLog()
+                            .domain(densityRangeClip)
+                            .range([8, 12]);
+            data.forEach( (d, flatIndex) => {
+                d.radii = scaleR(d.density);
+                d.rectPath = d3.rect({
+                        x: blockSize * (flatIndex % Nrow) + 6,
+                        y: (32 + Math.floor(flatIndex / Nrow) * blockSize),
+                        height: blockSize,
+                        width: blockSize
+                });
+                d.toCircleInt = flubber.toCircle(
+                    d.rectPath,
+                    imageX(d.particle_position_x),
+                    imageY(d.particle_position_y),
+                    scaleR(d.density)
+                );
+                d.toRectInt = flubber.fromCircle(
+                    imageX(d.particle_position_x),
+                    imageY(d.particle_position_y),
+                    scaleR(d.density),
+                    d.rectPath
+                );
+            });
+
+            lines = svg.selectAll("line")
+                .data(d3.range(8))
+                .enter()
+                .append("line");
+
+            svg.selectAll("path")
+                .data(data)
+                .enter()
+                .append("path");
+            return data;
+        })
+
+        function drawDisk(data) {
+            svg.selectAll("path")
+                .data(data)
+                .transition()
+                .delay((d, flatIndex) => (data.length - flatIndex) * 2)
+                .style("stroke", "none")
+                .style("fill", d => diskColorBW(d.density))
+                .attr("d", d => d.rectPath);
+            return data;
+        }
+
+        function diskToParticles(data) {
+            svg.selectAll("path")
+                .data(data)
+                .transition()
+                .delay((d, flatIndex) => (data.length - flatIndex) * 2)
+                .duration(2000)
+                .attrTween("d", d => d.toCircleInt)
+                .style("fill", d => diskColor(d.density));
+            return data;
+        }
+
+        function particlesToDisk(data) {
+            svg.selectAll("path")
+                .data(data)
+                .transition()
+                .delay((d, flatIndex) => flatIndex * 2)
+                .duration(4000)
+                .attrTween("d", d => d.toRectInt)
+                .style("fill", d => diskColorBW(d.density));
+            return data;
+        }
+
+        function highlightNeighbors(data) {
+            var t = Promise.resolve();
+            /* If I made an interpolator that smoothly went from one value all
+               the way to the end, this would look a lot nicer.  */
+            d3.range(10).forEach( () => {
+                particleHighlights.forEach( (ind, i) => {
+                    t = t.then( () => {
+                        svg.selectAll("path")
+                           .style("opacity", (d, i2) => {
+                               if ((i != i2) && (data[i].nearest_neighbors.indexOf(i2) == -1)) return 0.1;
+                               return 1.0;
+                           });
+                        // central particle is the highlight one
+                        svg.selectAll("line")
+                            .data(data[i].nearest_neighbors)
+                            .style("stroke", "black")
+                            .style("stroke-width", 2.0)
+                            .attr("x1", imageX(data[i].particle_position_x))
+                            .attr("x2", d => imageX(data[d].particle_position_x))
+                            .attr("y1", imageY(data[i].particle_position_y))
+                            .attr("y2", d => imageY(data[d].particle_position_y));
+                        return d3.transition().duration(1000).end();
+                    });
+                })
+            });
+            return data;
+        }
+
+
+        var _transitions = [{
+            transitionForward: () => loadData.then(drawDisk)
+        }, {
+            transitionForward: () => loadData.then(diskToParticles),
+            transitionBackward: () => loadData.then(particlestoDisk)
+        }, {
+            transitionForward: () => loadData.then(highlightNeighbors)
+        }];
+
+    </script>
+  </body>
+</html>

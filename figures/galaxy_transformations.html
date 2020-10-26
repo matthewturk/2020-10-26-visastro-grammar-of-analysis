@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+  <head>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.12.0/d3.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/flubber/0.4.2/flubber.min.js"></script>
+      <script src="https://unpkg.com/d3-rect"></script>
+      <script src="volgrammar-functions.js"></script>
+  </head>
+  <body>
+    <div id="vis-galaxy"></div>
+    
+    <script type="text/javascript">
+
+        const svg = d3
+            .select("#vis-galaxy")
+            .append("svg")
+            .attr("viewBox", [0, 0, 600, 600]);
+
+        var cfg = defaultConfig([32, 32], [
+            [
+                [0, 256],
+                [20.0, 200.0]
+            ],
+            [
+                [0, 256],
+                [0.0, Math.PI]
+            ]
+        ]);
+
+        var loadData = d3.json("galaxy0030.json").then(galData => {
+            var data = {
+                cells: createCells(cfg, 0, [32, 32], [0, 0], 0),
+                galaxy: galData
+            };
+            const fields = ["density", "temperature", "velocity_x", "velocity_y",
+                "velocity_z", "velocity_magnitude"
+            ];
+            data.extents = {};
+            fields.forEach(v => {
+                data.cells.forEach(d => {
+                    d[v] = galData[v][d.j][d.i]
+                })
+                data.extents[v] = d3.extent(data.cells, d => d[v]);
+            });
+            data.paths = createPaths(cfg, data.cells, 10);
+            var vel_fields = [data.extents["velocity_x"], data.extents["velocity_y"], data.extents["velocity_z"]];
+            data.extents["velocity_total"] = [d3.min(vel_fields, d => d[0]), d3.max(vel_fields, d => d[1])];
+            console.log(data.extents);
+            data.scales = {
+                density: d3.scaleSequentialLog(d3.interpolateViridis)
+                    .domain(data.extents["density"]),
+                temperature: d3.scaleSequentialLog(d3.interpolateInferno)
+                    .domain(data.extents["temperature"]),
+                velocity_x: d3.scaleSequentialSymlog(d3.interpolateRdBu)
+                    .domain(data.extents["velocity_total"])
+                    .constant(1e6),
+                velocity_y: d3.scaleSequentialSymlog(d3.interpolateRdBu)
+                    .domain(data.extents["velocity_total"])
+                    .constant(1e6),
+                velocity_z: d3.scaleSequentialSymlog(d3.interpolateRdBu)
+                    .domain(data.extents["velocity_total"])
+                    .constant(1e6),
+                velocity_magnitude: d3.scaleSequentialLog(d3.interpolateReds)
+                    .domain(data.extents["velocity_magnitude"])
+            };
+
+            return data;
+
+        });
+
+        function setup(data) {
+            svg.append("g").attr("id", "galaxy_density")
+                .selectAll("path")
+                .data(data.cells)
+                .enter()
+                .append("path")
+                .attr("stroke", "lightgrey")
+                .attr("stroke-width", 0.5)
+                .attr("stroke-opacity", 0.5)
+                .attr("fill-opacity", 1.0)
+                .attr("d", (d, path_i) => data.paths.memory[path_i])
+                .style("fill", (d) => (data.scales["density"](d.density)));
+            return data;
+        }
+
+        function createVelocities(data) {
+            g1 = svg.select("g#galaxy_density");
+
+            g2 = g1.clone(true);
+            g3 = g2.clone(true);
+
+            var t1 = d3.transition().duration(1500);
+            var t2 = d3.transition().duration(1500);
+
+            g1 = g1.attr("id", "galaxy_velocity_x").selectAll("path");
+
+            g1.data(data.cells)
+                .transition(t1)
+                .attr("transform", "translate(272, 0)")
+                .transition(t2)
+                .style("fill", (d) => (data.scales["velocity_x"](d.velocity_x)));
+
+            g2 = g2.attr("id", "galaxy_velocity_y").selectAll("path");
+
+            g2.data(data.cells)
+                .transition(t1)
+                .attr("transform", "translate(0, 272)")
+                .transition(t2)
+                .style("fill", (d) => (data.scales["velocity_y"](d.velocity_y)));
+
+            return data;
+        }
+
+        function createVelocityMagnitude(data) {
+            gx1 = svg.select("g#galaxy_velocity_x");
+            gy1 = svg.select("g#galaxy_velocity_y");
+
+            gx2 = gx1.clone(true);
+            gy2 = gy1.clone(true);
+
+            var t1 = d3.transition().duration(1500);
+            var t2 = d3.transition().duration(1500);
+
+            gx1 = gx1.attr("id", "galaxy_velocity_magnitude1").selectAll("path");
+            gx1.style("fill-opacity", 0.5);
+            gx1.data(data.cells)
+                .transition(t1)
+                .attr("transform", "translate(272, 272)")
+                .transition(t2)
+                .style("fill-opacity", 1.0)
+                .style("fill", (d) => (data.scales["velocity_magnitude"](d.velocity_magnitude)));
+
+            gy1 = gy1.attr("id", "galaxy_velocity_magnitude2").selectAll("path");
+            gy1.style("fill-opacity", 0.5);
+            gy1.data(data.cells)
+                .transition(t1)
+                .attr("transform", "translate(272, 272)")
+                .transition(t2)
+                .style("fill-opacity", 1.0)
+                .style("fill", (d) => (data.scales["velocity_magnitude"](d.velocity_magnitude)));
+
+            return data;
+        }
+
+        var _transitions = [{
+            transitionForward: () => loadData.then(setup)
+        }, {
+            transitionForward: () => loadData.then(createVelocities)
+        }, {
+            transitionForward: () => loadData.then(createVelocityMagnitude)
+        }];
+    </script>
+  </body>
+</html>

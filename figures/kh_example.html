@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+  <head>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.12.0/d3.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/flubber/0.4.2/flubber.min.js"></script>
+      <script src="https://unpkg.com/d3-rect"></script>
+      <script src="volgrammar-functions.js"></script>
+  </head>
+  <body>
+    <div id="vis-kh-example"></div>
+    
+    <script type="text/javascript">
+
+        const svg = d3
+                .select("#vis-kh-example")
+                .append("svg")
+                .attr("viewBox", [0, 0, 500, 500]);
+
+        var khGridConfig = defaultConfig([32, 32],
+                                [ [ [0, 500], [ 20, 200 ] ],
+                                  [ [0, 500], [ 0.0, Math.PI ] ] ] );
+
+        function setup(data) {
+            var cellColor = d3.scaleSequential(d3.interpolateViridis).domain([0.95, 2.15]);
+            svg.selectAll("path")
+                .data(data.cells)
+                .enter()
+                .append("path")
+                .attr("d", (d, path_i) => data.paths.memory[path_i])
+                .style("stroke", "lightgrey")
+                .style("stroke-width", 1.0)
+                .style("stroke-opacity", 0.5)
+                .style("fill", (d, flatIndex) => cellColor(d.value[0]))
+                .style("fill-opacity", 1.0);
+            return data;
+        }
+
+        var loadData = d3.json("kh_ts.json").then( kh=> {
+            cellData = createCells(khGridConfig, 0, [32, 32], [0, 0], 0);
+            cellData.forEach( d => {
+                d.value = kh.map( (v, i) => kh[i][d.j][d.i] );
+            });
+            return {
+                kh: kh,
+                cells: cellData,
+                paths: createPaths(khGridConfig, cellData, 10)
+            };
+        }).then(setup);
+
+        function frameSet(data) {
+            var cellColor = d3.scaleSequential(d3.interpolateViridis).domain([0.95, 2.15]);
+            var t = Promise.resolve();
+            /* If I made an interpolator that smoothly went from one value all
+               the way to the end, this would look a lot nicer.  */
+            data.cells[0].value.forEach( (_, i) => {
+                t = t.then( () => 
+                    svg.selectAll("path")
+                    .data(data.cells)
+                    .transition()
+                    .duration(500)
+                    .style("fill", (d, flatIndex) => cellColor(d.value[i]))
+                    .end()
+                )
+            });
+        }
+
+        var _transitions = [
+            {
+                transitionForward: () => loadData.then(frameSet)
+            }
+        ];
+
+    </script>
+  </body>
+</html>

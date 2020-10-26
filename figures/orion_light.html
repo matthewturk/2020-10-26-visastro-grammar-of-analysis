@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+  <head>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.12.0/d3.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/flubber/0.4.2/flubber.min.js"></script>
+      <script src="https://unpkg.com/d3-rect"></script>
+      <script src="https://cdn.jsdelivr.net/npm/vega"></script>
+      <script src="https://cdn.jsdelivr.net/npm/vega-lite"></script>
+      <script src="https://cdn.jsdelivr.net/npm/vega-embed"></script>
+	  <script src="https://cdn.jsdelivr.net/npm/d3-interpolate-path@2.1.2/build/d3-interpolate-path.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/roughjs@4.2.3/bundled/rough.min.js"></script>
+      <script src="rough_funcs.js"></script>
+      <link href="https://fonts.googleapis.com/css2?family=Mali:wght@600&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div id="vis" style="text-align: center;"></div>
+    <script type="text/javascript">
+
+        const svg = d3
+            .select("#vis")
+            .append("svg")
+            .style("align", "center")
+            .attr("height", 512)
+            .attr("width", 1024);
+
+
+        function displayCubistOrion() {
+            svg.append("image")
+               .attr("href", "../images/cubist_orion.jpg")
+               .attr("x", 0)
+               .attr("y", 0)
+               .attr("height", 400)
+               .attr("width", 400);
+        }
+
+        function drawEyeballs() {
+            const rc = rough.svg(svg);
+            const generator = rc.generator;
+            
+            var paths = [];
+
+            var e = rc.draw(generator.arc(800, 200, 150, 150, 
+                7 * Math.PI/8, 9 * Math.PI/8, true,
+                {strokeWidth: 5.0,
+                    stroke: "darkSlateBlue",
+                    fillWeight: 10.0,
+                    fill: "rgba(72, 61, 139, 0.05)",
+                    roughness: 1}))
+            paths.push(splitRoughElement(e));
+
+            var e = rc.draw(generator.arc(765, 200, 75, 150,
+                Math.PI - 0.1, Math.PI + 0.1, true,
+                {strokeWidth: 5.0,
+                    stroke: "green",
+                    fillWeight: 10.0,
+                    fillColor: "green",
+                    roughness: 1}))
+            paths.push(splitRoughElement(e));
+
+            svg.selectAll("g")
+                .data(paths)
+                .enter()
+                .append("g")
+                .each( (d, i, n) => {
+                    d3.select(n[i])
+                        .selectAll("path")
+                        .data(d)
+                        .enter()
+                        .append("path")
+                        .attr("class", "eyeBall")
+                        .attr("d", d => d.d)
+                        .attr("style", d => d.style);
+                });
+            progressiveDraw(svg.selectAll("path.eyeBall"), 1.5);
+
+        };
+
+        function drawLightRays() {
+
+            const rc = rough.svg(svg);
+            const generator = rc.generator;
+
+            let yRange = d3.range(10, 390, 25);
+            let xRange = d3.range(410, 600, 0.5);
+            let randomPhaseGenerator = d3.randomUniform(95, 105);
+            
+            d3.range(10, 390, 25).forEach( (y, yj) => {
+                var myPaths = []
+                var myPoints = []
+                var phase = randomPhaseGenerator();
+                var c = d3.hsl("lightCoral");
+                c.h += 30 * (phase - 100)/2;
+                console.log(c.formatRgb());
+                d3.range(410, 700, 0.5).forEach((x, xi) => {
+                    let xdeg = (Math.PI / phase) * x;
+                    let offset = Math.round(Math.sin(xdeg) * 10);
+                    myPoints.push([x, y + offset]);
+                });
+                var e = rc.draw(generator.curve( myPoints, {
+                    stroke: c.formatRgb(), strokeWidth: 1
+                }));
+                myPaths.push(splitRoughElement(e));
+                svg.selectAll("g#cc" + yj)
+                    .data(myPaths)
+                    .enter()
+                    .append("g")
+                    .attr("id", "cc" + yj)
+                    .each( (d, i, n) => {
+                        d3.select(n[i])
+                            .selectAll("path")
+                            .data(d)
+                            .enter()
+                            .append("path")
+                            .attr("class", "lightCurves" + yj)
+                            .attr("d", d => d.d)
+                            .attr("style", d => d.style);
+                    });
+                var p = Promise.resolve(null);
+                for (i = 0; i < 100; i ++) {
+                    p = p.then(() => progressiveDrawAndUndraw(svg.selectAll("path.lightCurves" + yj), 2.0));
+                }
+            });
+        }
+
+        var _transitions = [{
+            transitionForward: () => displayCubistOrion(),
+        }, {
+            transitionForward: () => drawEyeballs(),
+        }, {
+            transitionForward: () => drawLightRays(),
+        }
+        ];
+
+    </script>
+  </body>
+</html>
