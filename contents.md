@@ -1,6 +1,6 @@
 <!-- .slide: class="titleslide" -->
 
-# Interpretation, Grammar and Visualization
+# A Grammar of Analysis for Volumetric Astrophysical Data
 
 ## Matthew Turk
 
@@ -8,62 +8,80 @@
 
 ---
 
-My Background:
+## Thank you
 
- * Trained in **physics and astronomy**, studying the formation of the first stars in the universe
- * Studying and supporting the *sustainable* development of **open source software for science**
- * Working to build **reproducible** systems to apply **grammars** of analysis to spatial and volumetric data, such as [`yt`](https://yt-project.org/), [whole tale](https://wholetale.org/) and [Crops in Silico](https://github.com/cropsinsilico/).
- * Teach in data visualization and data storytelling
+Before I begin, I want to say thank you for the organizers for putting this together and for inviting me to be a part of this.
 
----
-
-## Cartoon History of the Universe
-
-<div class="multiCol">
-<div class="col">
-<div class="fig-container" data-style="height: 600px;" data-file="figures/collapse_heating.html" data-markdown=true>
-</div>
-</div>
-<div class="col" data-markdown=true>
-<p class="fragment" data-fragment-index="0">After recombination, the universe was in a nearly-but-not-totally homogeneous state, seeded with instabilities and with a few residual electrons.</p>
-<div class="fragment" data-fragment-index="1">
-<p>Early-on, dark matter clumps collected and formed "halos," drawing in baryonic material.</p>
-<p>This process converted potential energy into thermal energy, heating the baryonic matter, which shed the thermal energy through radiative processes.</p>
-</div>
-<p class="fragment" data-fragment-index="2">Eventually, this cloud becomes fully-molecular through the three-body interaction and forms an accretion disk.</p>
-</div>
-</div>
+I am humbled and grateful for this opportunity, especially in the midst of the situation throughout the world right now.
 
 ---
 
-## Molecular Hydrogen
+## Credits: Local
 
 <div class="multiCol">
 <div class="col" data-markdown=true>
-<div class="fig-container" data-style="height: 400px;" data-file="figures/three_body.html" data-markdown=true>
-</div>
-<div class="fragment" data-fragment-index="1">
-$$
-\begin{align}
-\mathrm{H} + \mathrm{H} + \mathrm{H} & \rightarrow \mathrm{H}_2 + \mathrm{H} \\
-\mathrm{H}_2 + \mathrm{H} & \rightarrow \mathrm{H} + \mathrm{H} + \mathrm{H} \\
-\mathrm{H}_2 + \mathrm{H} + \mathrm{H} & \rightarrow \mathrm{H}_2 + \mathrm{H}_2 \\
-\mathrm{H}_2 + \mathrm{H}_2 & \rightarrow \mathrm{H} + \mathrm{H} + \mathrm{H}_2
-\end{align}
-$$
-</div>
+
+![Samantha Walkow](https://raw.githubusercontent.com/data-exp-lab/data-exp-lab.github.io/4ff6549d71c67b62b958fa6d8ff66c3dd2a13356/assets/img/people/swalkow.jpg) <!-- .element: class="headshot" -->
+
+Samantha Walkow <!-- .element: class="headshot-caption" -->
+
 </div>
 <div class="col" data-markdown=true>
-<p data-markdown=true>In an environment absent heavy elements, the mechanisms by which gas can cool are quite limited.  The principal coolant is molecular hydrogen, which forms first via electron association ($\mathrm{H}^{-}$) and then through three body interactions.</p>
-<p class="fragment" data-markdown=true>
-This formation channel results in molecular hydrogen that begins in an excited state.
-</p>
-<p class="fragment" data-markdown=true>
-This molecule then quickly de-excites through collisions, resulting in a net heating of the gas by roughly 4.48 eV per molecule.
-</p>
+
+![Madicken Munk](https://raw.githubusercontent.com/data-exp-lab/data-exp-lab.github.io/4ff6549d71c67b62b958fa6d8ff66c3dd2a13356/assets/img/people/munkm.jpg) <!-- .element: class="headshot" -->
+
+Madicken Munk <!-- .element: class="headshot-caption" -->
+
+</div>
+<div class="col" data-markdown=true>
+
+![Kacper Kowalik](https://raw.githubusercontent.com/data-exp-lab/data-exp-lab.github.io/4ff6549d71c67b62b958fa6d8ff66c3dd2a13356/assets/img/people/kacper-kowalik.jpg) <!-- .element: class="headshot" -->
+
+Kacper Kowalik <!-- .element: class="headshot-caption" -->
+
+</div>
+</div>
+<div class="multiCol">
+
+<div class="col" data-markdown=true>
+
+![Meagan Lang](https://raw.githubusercontent.com/data-exp-lab/data-exp-lab.github.io/4ff6549d71c67b62b958fa6d8ff66c3dd2a13356/assets/img/people/langmm.jpg) <!-- .element: class="headshot" -->
+
+Meagan Lang <!-- .element: class="headshot-caption" -->
+
+</div>
+<div class="col" data-markdown=true>
+
+![Jared Coughlin](https://raw.githubusercontent.com/data-exp-lab/data-exp-lab.github.io/4ff6549d71c67b62b958fa6d8ff66c3dd2a13356/assets/img/people/jcoughlin11.jpg) <!-- .element: class="headshot" -->
+
+Jared Coughlin <!-- .element: class="headshot-caption" -->
+
+</div>
+<div class="col" data-markdown=true>
+
+![Chris Havlin](https://raw.githubusercontent.com/data-exp-lab/data-exp-lab.github.io/4ff6549d71c67b62b958fa6d8ff66c3dd2a13356/assets/img/people/chavlin.jpg) <!-- .element: class="headshot" -->
+
+Chris Havlin <!-- .element: class="headshot-caption" -->
+
 </div>
 </div>
 
+---
+
+## Credits: `yt`
+
+`yt` is a community of users and developers.  The steering committee is made up of:
+
+ * Britton Smith
+ * Madicken Munk
+ * John ZuHone
+ * Stephanie Tonnesen
+ * Nathan Goldbaum
+ * Matthew Turk
+ * Cameron Hummels
+
+Two additional folks who have bene extremely active lately I'd like to
+recognize are Clément Robert and Corentin Cadiou.
 
 ---
 
@@ -87,16 +105,6 @@ This molecule then quickly de-excites through collisions, resulting in a net hea
 
 <div class="fig-container" data-file="figures/orion_light.html" data-markdown=true>
 </div>
-
----
-
-# Why is this important?
-
-<span class="fragment">Our ability to decode visual information determines our ability to communicate
-to stakeholders.</span>
-
-<span class="fragment">The vocabulary we use to provide inputs to our AI can be informed by the
-grammars we use to analyze that data.</span>
 
 ---
 
@@ -131,6 +139,95 @@ $$\begin{aligned}{\partial \rho  \over \partial t}+\nabla \cdot (\rho \mathbf{v}
 $$\begin{aligned}{\partial \rho  \over \partial t}+\nabla \cdot (\rho \mathbf{v}) &= 0\\
 {\frac {\partial \mathbf {v} }{\partial t}}+\mathbf {v} \cdot \nabla \mathbf {v} +{\frac {\nabla p}{\rho }}&=\mathbf {g}\\
 {\partial e \over \partial t}+\mathbf {v} \cdot \nabla e+{\frac {p}{\rho }}\nabla \cdot \mathbf {v} &=0\end{aligned}$$
+</div>
+</div>
+
+---
+
+## But, what do people do?
+
+![Samantha Walkow](https://raw.githubusercontent.com/data-exp-lab/data-exp-lab.github.io/4ff6549d71c67b62b958fa6d8ff66c3dd2a13356/assets/img/people/swalkow.jpg) <!-- .element: class="headshot" -->
+
+Samantha Walkow has been conducting an investigation into "data storytelling" and how individual researchers describe their process.<!-- .element: class="headshot-caption" -->
+
+---
+
+<div class="multiCol">
+<div class="col">
+
+![](images/s1_0.png)<!-- .element: class="storypanel fragment" -->
+
+</div>
+<div class="col">
+
+![](images/s1_1.jpg)<!-- .element: class="storypanel fragment" -->
+
+</div>
+</div>
+<div class="multiCol">
+<div class="col">
+
+![](images/s1_2.gif)<!-- .element: class="storypanel fragment" -->
+
+</div>
+<div class="col">
+
+![](images/s1_3.png)<!-- .element: class="storypanel fragment" -->
+
+</div>
+</div>
+
+---
+
+<div class="multiCol">
+<div class="col">
+
+![](images/s2_0.png)<!-- .element: class="storypanel fragment" -->
+
+</div>
+<div class="col">
+
+![](images/s2_1.png)<!-- .element: class="storypanel fragment" -->
+
+</div>
+</div>
+<div class="multiCol">
+<div class="col">
+
+![](images/s2_2.png)<!-- .element: class="storypanel fragment" -->
+
+</div>
+<div class="col">
+
+&nbsp;
+
+</div>
+</div>
+
+---
+
+<div class="multiCol">
+<div class="col">
+
+![](images/s3_0.png)<!-- .element: class="storypanel fragment" -->
+
+</div>
+<div class="col">
+
+![](images/s3_1.png)<!-- .element: class="storypanel fragment" -->
+
+</div>
+</div>
+<div class="multiCol">
+<div class="col">
+
+![](images/s3_2.png)<!-- .element: class="storypanel fragment" -->
+
+</div>
+<div class="col">
+
+&nbsp;
+
 </div>
 </div>
 
@@ -300,9 +397,11 @@ We can apply reductions along axes, paths and non-trivial manifolds.
 <img src="images/yt_logo.svg">
 </div>
 <div class="col">
+
 The `yt` platform for analysis is a mechanism for abstracting the underlying
 operations and building reproducible analysis procedures, independent of data
-representation and distribution.
+representation and distribution.  `yt` supports a couple dozen data formats,
+from the very big to the very small.
 
 [yt-project.org](https://yt-project.org/)
 
@@ -315,13 +414,48 @@ natural sciences.
 </div>
 </div>
 
+---
+
 # Data Storytelling
 
 We have to span the entire process from data **acquisition**, to **analysis**,
-to **application** to develop understandable information for stakeholders.
+to **application** to develop understandable information for researchers.
+
+We are implementing this grammar of analysis within `yt`, starting with high-level operations like visualizations.  We build this on the concepts developed by precursors such as `vega-lite` (Satyanarayan et al), volume visualization (Shih et al) and the Grammar of Graphics (Wilkinson), to encompass the full pipeline of registration, transformation, selection and reduction as applied to volumetric data.
+
+<div class="multiCol">
+<div class="col">
+
+```json
+{
+    "fields": ["density", "temperature"],
+    "axes": ["z"],
+    "center": {
+        "max": "density"
+    },
+    "widths": [ [50.0, "kpc"] ],
+    "min": {
+        "density": {
+            "minimum": "density"
+        }
+    },
+    "max": {
+        "density": [1e-22, "g/cm**3"]
+    }
+}
+```
+
+</div>
+<div class="col">
+
+![An example image](images/galaxy0030_Slice_z_density.png) <!-- .element: style="max-height: 300px;" -->
+
+</div>
 
 ---
 
 <!-- .slide: class="titleslide" -->
 
 # Thank you!
+
+And thanks to funding from the University of Illinois, the Gordon and Betty Moore Foundation, the National Science Foundation, NumFOCUS, and the Foundation for Food and Agriculture Research.
