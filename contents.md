@@ -149,9 +149,21 @@ $$\begin{aligned}{\partial \rho  \over \partial t}+\nabla \cdot (\rho \mathbf{v}
 
 ## But, what do people do?
 
+<div class="multiCol">
+<div class="col">
+
 ![Samantha Walkow](https://raw.githubusercontent.com/data-exp-lab/data-exp-lab.github.io/4ff6549d71c67b62b958fa6d8ff66c3dd2a13356/assets/img/people/swalkow.jpg) <!-- .element: class="headshot" -->
 
-Samantha Walkow has been conducting an investigation into "data storytelling" and how individual researchers describe their process.<!-- .element: class="headshot-caption" -->
+</div>
+
+<div class="col">
+
+Samantha Walkow has been conducting an investigation into "data storytelling" and how individual researchers describe their process.
+
+Our understanding of the process of visualization, cognition, and semantically-meaningful models will outlast any single tool or platform.<!-- .element: class="fragment" -->
+
+</div>
+</div>
 
 ---
 
